@@ -24,6 +24,10 @@ function initializeViewer() {
       border-bottom: 2px solid #333;
       max-height: 80vh;
       overflow-x: auto;
+      cursor: move;
+      user-select: none;
+      width: 80%;
+      margin: 0 auto;
     }
     .csv-table {
       width: 100%;
@@ -78,7 +82,15 @@ function displayLine(lineIndex) {
     const cells = state.csvLines[lineIndex].split(',');
     cells.forEach(cell => {
       const td = document.createElement('td');
-      td.textContent = cell.trim();
+      const cellText = cell.trim();
+      td.textContent = cellText;
+      
+      // Vérifier si le texte de la cellule existe dans la page
+      const pageText = document.body.textContent.toLowerCase();
+      if (pageText.includes(cellText.toLowerCase())) {
+        td.style.backgroundColor = '#90EE90'; // Fond vert clair
+      }
+      
       dataRow.appendChild(td);
     });
     table.appendChild(dataRow);
@@ -113,6 +125,42 @@ function createCSVViewer() {
   viewer.id = 'csv-viewer';
   viewer.className = 'csv-viewer';
   
+  // Ajout des variables pour le déplacement
+  let isDragging = false;
+  let currentX;
+  let currentY;
+  let initialX;
+  let initialY;
+  let xOffset = 0;
+  let yOffset = 0;
+
+  // Gestionnaire d'événements pour le déplacement
+  viewer.addEventListener('mousedown', (e) => {
+    initialX = e.clientX - xOffset;
+    initialY = e.clientY - yOffset;
+    
+    if (e.target === viewer || e.target.tagName === 'DIV') {
+      isDragging = true;
+    }
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+      xOffset = currentX;
+      yOffset = currentY;
+
+      viewer.style.transform = `translate(${currentX}px, ${currentY}px)`;
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  // Le reste du code existant de createCSVViewer
   const table = document.createElement('table');
   table.id = 'csv-table';
   table.className = 'csv-table';
@@ -129,7 +177,6 @@ function createCSVViewer() {
   viewer.appendChild(navigation);
   document.body.prepend(viewer);
   
-  // Ajouter les écouteurs d'événements
   setTimeout(() => {
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
