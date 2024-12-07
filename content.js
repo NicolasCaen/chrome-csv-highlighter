@@ -110,8 +110,6 @@ function clearPreviousHighlights() {
 
 function displayLine(lineIndex) {
   clearPreviousHighlights();
-  console.log('Affichage de la ligne:', lineIndex);
-  console.log('Données disponibles:', state.csvLines);
   
   const table = document.getElementById('csv-table');
   if (!table || !state.csvLines[lineIndex]) {
@@ -119,10 +117,9 @@ function displayLine(lineIndex) {
     return;
   }
   
-  // Nettoyer le tableau
   table.innerHTML = '';
   
-  // Toujours afficher l'en-tête (première ligne)
+  // En-tête
   const headerRow = document.createElement('tr');
   const headers = state.csvLines[0].split(',');
   headers.forEach(header => {
@@ -132,20 +129,44 @@ function displayLine(lineIndex) {
   });
   table.appendChild(headerRow);
   
-  // Afficher la ligne de données actuelle (sauf si c'est la première ligne)
+  // Ligne de données avec inputs
   if (lineIndex > 0) {
     const dataRow = document.createElement('tr');
     const cells = state.csvLines[lineIndex].split(',');
-    cells.forEach(cell => {
+    cells.forEach((cell, cellIndex) => {
       const td = document.createElement('td');
-      const cellText = cell.trim();
-      td.textContent = cellText;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = cell.trim();
+      input.style.width = '100%';
+      input.style.padding = '4px';
+      input.style.border = '1px solid #ddd';
       
-      // Vérifier si le texte de la cellule existe dans la page
+      // Sauvegarder les modifications
+      input.addEventListener('change', (e) => {
+        const newValue = e.target.value;
+        const currentLine = state.csvLines[lineIndex].split(',');
+        currentLine[cellIndex] = newValue;
+        state.csvLines[lineIndex] = currentLine.join(',');
+        
+        // Vérifier si le texte existe dans la page
+        const pageText = document.body.textContent.toLowerCase();
+        if (pageText.includes(newValue.toLowerCase())) {
+          td.style.backgroundColor = '#90EE90';
+          highlightTextInPage(newValue);
+        } else {
+          td.style.backgroundColor = '';
+          clearPreviousHighlights();
+        }
+      });
+      
+      td.appendChild(input);
+      
+      // Vérifier si le texte existe dans la page
       const pageText = document.body.textContent.toLowerCase();
-      if (pageText.includes(cellText.toLowerCase())) {
+      if (pageText.includes(cell.trim().toLowerCase())) {
         td.style.backgroundColor = '#90EE90';
-        highlightTextInPage(cellText);
+        highlightTextInPage(cell.trim());
       }
       
       dataRow.appendChild(td);
@@ -156,7 +177,6 @@ function displayLine(lineIndex) {
   // Mettre à jour le compteur
   const counter = document.getElementById('csv-counter');
   if (counter) {
-    // Ajuster le compteur pour ne pas compter la ligne d'en-tête
     counter.textContent = `Ligne ${lineIndex} sur ${state.csvLines.length - 1}`;
   }
 }
@@ -240,6 +260,21 @@ function createCSVViewer() {
     if (prevBtn) prevBtn.addEventListener('click', showPreviousLine);
     if (nextBtn) nextBtn.addEventListener('click', showNextLine);
   }, 0);
+
+  const downloadBtn = document.createElement('button');
+  downloadBtn.textContent = 'Télécharger CSV';
+  downloadBtn.className = 'csv-nav-button';
+  downloadBtn.addEventListener('click', () => {
+    const csvContent = state.csvLines.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modified.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  });
+  navigation.appendChild(downloadBtn);
 }
 
 // Gestionnaire de messages
