@@ -53,6 +53,39 @@ function initializeViewer() {
   document.head.appendChild(style);
 }
 
+function highlightTextInPage(searchText) {
+  if (!searchText || searchText.length < 2) return; // Ignore les textes trop courts
+
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+
+  let node;
+  while (node = walker.nextNode()) {
+    const parent = node.parentNode;
+    // Ignorer le texte dans notre viewer CSV et dans les scripts
+    if (parent.closest('#csv-viewer') || 
+        parent.tagName === 'SCRIPT' || 
+        parent.tagName === 'STYLE') {
+      continue;
+    }
+
+    const text = node.textContent;
+    const regex = new RegExp(searchText, 'gi');
+    
+    if (regex.test(text)) {
+      const span = document.createElement('span');
+      span.innerHTML = text.replace(regex, match => 
+        `<mark style="background-color: #90EE90; padding: 2px; border-radius: 2px;">${match}</mark>`
+      );
+      parent.replaceChild(span, node);
+    }
+  }
+}
+
 function displayLine(lineIndex) {
   console.log('Affichage de la ligne:', lineIndex);
   console.log('Données disponibles:', state.csvLines);
@@ -88,7 +121,8 @@ function displayLine(lineIndex) {
       // Vérifier si le texte de la cellule existe dans la page
       const pageText = document.body.textContent.toLowerCase();
       if (pageText.includes(cellText.toLowerCase())) {
-        td.style.backgroundColor = '#90EE90'; // Fond vert clair
+        td.style.backgroundColor = '#90EE90';
+        highlightTextInPage(cellText);
       }
       
       dataRow.appendChild(td);
