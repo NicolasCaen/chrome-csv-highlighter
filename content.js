@@ -138,10 +138,36 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.value = cell.trim();
-        input.style.width = '100%';
-        input.style.padding = '4px';
-        input.style.border = '1px solid #ddd';
-        
+        input.style.cssText = `
+          width: 100%;
+          min-width: 50px;
+          padding: 4px;
+          border: 1px solid #ddd;
+          box-sizing: border-box;
+          resize: horizontal;
+          overflow: visible;
+        `;
+        // Ajuster automatiquement la largeur
+        function adjustWidth() {
+          const tempSpan = document.createElement('span');
+          tempSpan.style.cssText = `
+            position: absolute;
+            visibility: hidden;
+            white-space: pre;
+            font-family: inherit;
+            font-size: inherit;
+            padding: inherit;
+          `;
+          tempSpan.textContent = input.value;
+          document.body.appendChild(tempSpan);
+          input.style.width = (tempSpan.offsetWidth + 20) + 'px';
+          document.body.removeChild(tempSpan);
+        }
+            // Ajuster la largeur initiale
+    input.addEventListener('input', adjustWidth);
+    
+    // Ajuster après le chargement
+    setTimeout(adjustWidth, 0);
         // Sauvegarder les modifications
         input.addEventListener('change', (e) => {
           const newValue = e.target.value;
