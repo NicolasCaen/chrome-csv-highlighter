@@ -54,25 +54,37 @@ function initializeViewer() {
 }
 
 function highlightTextInPage(searchText) {
-  if (!searchText || searchText.length < 2) return; // Ignore les textes trop courts
+  if (!searchText || searchText.length < 2) return;
 
+  // Fonction pour vérifier si un nœud doit être ignoré
+  function shouldSkipNode(node) {
+    const parent = node.parentNode;
+    return parent.closest('#csv-viewer') || // Ignore notre viewer
+           parent.tagName === 'SCRIPT' ||   // Ignore les scripts
+           parent.tagName === 'STYLE' ||    // Ignore les styles
+           parent.tagName === 'HEAD' ||     // Ignore le head
+           parent.tagName === 'NOSCRIPT' || // Ignore noscript
+           parent.closest('iframe');        // Ignore les iframes
+  }
+
+  // Récupérer uniquement le contenu du body
+  const bodyContent = document.body;
+  
   const walker = document.createTreeWalker(
-    document.body,
+    bodyContent,
     NodeFilter.SHOW_TEXT,
-    null,
+    {
+      acceptNode: function(node) {
+        return shouldSkipNode(node) ? 
+          NodeFilter.FILTER_REJECT : 
+          NodeFilter.FILTER_ACCEPT;
+      }
+    },
     false
   );
 
   let node;
   while (node = walker.nextNode()) {
-    const parent = node.parentNode;
-    // Ignorer le texte dans notre viewer CSV et dans les scripts
-    if (parent.closest('#csv-viewer') || 
-        parent.tagName === 'SCRIPT' || 
-        parent.tagName === 'STYLE') {
-      continue;
-    }
-
     const text = node.textContent;
     const regex = new RegExp(searchText, 'gi');
     
@@ -81,12 +93,23 @@ function highlightTextInPage(searchText) {
       span.innerHTML = text.replace(regex, match => 
         `<mark style="background-color: #90EE90; padding: 2px; border-radius: 2px;">${match}</mark>`
       );
-      parent.replaceChild(span, node);
+      node.parentNode.replaceChild(span, node);
     }
   }
 }
 
+function clearPreviousHighlights() {
+  const highlights = document.querySelectorAll('mark');
+  highlights.forEach(highlight => {
+    const parent = highlight.parentNode;
+    parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+    // Normaliser pour fusionner les nœuds de texte adjacents
+    parent.normalize();
+  });
+}
+
 function displayLine(lineIndex) {
+  clearPreviousHighlights();
   console.log('Affichage de la ligne:', lineIndex);
   console.log('Données disponibles:', state.csvLines);
   
