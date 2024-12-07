@@ -1,11 +1,11 @@
-Formation,Nom,Prénom,Code_Formation,Durée_Formation,Signature,Date_Début,Centre,Prix,Statut
-Développement Web,Dubois,Marie,DEV-001,6 mois,MD,2024-01-15,Paris,6500,En cours
-Data Science,Martin,Thomas,DATA-102,8 mois,TM,2024-02-01,Lyon,8000,Inscrit
-Design UX/UI,Bernard,Sophie,UX-203,3 mois,SB,2024-03-10,Marseille,4500,En cours
-DevOps,Petit,Lucas,OPS-304,4 mois,LP,2024-02-15,Toulouse,5500,Terminé
-Marketing Digital,Robert,Emma,MKT-405,2 mois,ER,2024-04-01,Bordeaux,3500,Inscrit
-Intelligence Artificielle,Moreau,Hugo,IA-506,12 mois,HM,2024-01-20,Paris,9500,En cours
-Cybersécurité,Lambert,Julie,SEC-607,6 mois,JL,2024-03-15,Lyon,7000,Inscrit
-Gestion de Projet,Durand,Alexandre,GP-708,4 mois,AD,2024-02-10,Nantes,4800,En cours
-Cloud Computing,Leroy,Clara,CLD-809,5 mois,CL,2024-05-01,Lille,6200,Inscrit
-Développement Mobile,Roux,Nicolas,MOB-910,7 mois,NR,2024-04-15,Nice,7500,En cours 
+Formation,Nom,Prénom,Code_Formation,Durée_Formation,Signature,Date_Début,Centre,Prix,Statut,valide1,valide2,valide3
+Développement Web,Dubois,Marie,DEV-001,6 mois,MD,2024-01-15,Paris,6500,En cours,1,1,1
+Data Science,Martin,Thomas,DATA-102,8 mois,TM,2024-02-01,Lyon,8000,Inscrit,,,
+Design UX/UI,Bernard,Sophie,UX-203,3 mois,SB,2024-03-10,Marseille,4500,En cours,,,   
+DevOps,Petit,Lucas,OPS-304,4 mois,LP,2024-02-15,Toulouse,5500,Terminé,1,1,1
+Marketing Digital,Robert,Emma,MKT-405,2 mois,ER,2024-04-01,Bordeaux,3500,Inscrit,1,1,1
+Intelligence Artificielle,Moreau,Hugo,IA-506,12 mois,HM,2024-01-20,Paris,9500,En cours,1,1,1
+Cybersécurité,Lambert,Julie,SEC-607,6 mois,JL,2024-03-15,Lyon,7000,Inscrit,1,1,1
+Gestion de Projet,Durand,Alexandre,GP-708,4 mois,AD,2024-02-10,Nantes,4800,En cours,1,1,1
+Cloud Computing,Leroy,Clara,CLD-809,5 mois,CL,2024-05-01,Lille,6200,Inscrit,1,1,1
+Développement Mobile,Roux,Nicolas,MOB-910,7 mois,NR,2024-04-15,Nice,7500,En cours,1,1,1 
