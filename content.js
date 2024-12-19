@@ -121,9 +121,30 @@
     
     table.innerHTML = '';
     
-    // En-tête
+    // Gérer les guillemets et les virgules dans les cellules
+    const parseLine = (line) => {
+      const cells = [];
+      let cell = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          cells.push(cell);
+          cell = '';
+        } else {
+          cell += char;
+        }
+      }
+      cells.push(cell);
+      return cells.map(c => c.trim().replace(/(^"|"$)/g, ''));
+    };
+
+    // En-tête avec parsing amélioré
     const headerRow = document.createElement('tr');
-    const headers = state.csvLines[0].split(',');
+    const headers = parseLine(state.csvLines[0]);
     headers.forEach(header => {
       const th = document.createElement('th');
       th.textContent = header.trim();
@@ -131,10 +152,10 @@
     });
     table.appendChild(headerRow);
     
-    // Ligne de données avec inputs
+    // Ligne de données avec parsing amélioré
     if (lineIndex > 0) {
       const dataRow = document.createElement('tr');
-      const cells = state.csvLines[lineIndex].split(',');
+      const cells = parseLine(state.csvLines[lineIndex]);
       cells.forEach((cell, cellIndex) => {
         const td = document.createElement('td');
         const input = document.createElement('input');
@@ -336,7 +357,10 @@
   function processCSV(data) {
     console.log('Données CSV reçues:', data.substring(0, 100));
     
-    state.csvLines = data
+    // Normaliser les sauts de ligne pour la compatibilité Windows/Mac
+    const normalizedData = data.replace(/\r\n|\r|\n/g, '\n');
+    
+    state.csvLines = normalizedData
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
