@@ -18,7 +18,7 @@
         left: 0;
         right: 0;
         background: white;
-        padding: 20px;
+        padding: 0!important;
         box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         z-index: 999999;
         border-bottom: 2px solid #333;
@@ -32,13 +32,15 @@
       .csv-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
+        margin-bottom: 0;
         background: #fff;
       }
       .csv-table th, .csv-table td {
         border: 1px solid #ddd;
         padding: 8px;
         text-align: left;
+        width: 100%;
+        box-sizing: border-box;
       }
       .csv-table th {
         background-color: #f2f2f2;
@@ -141,11 +143,14 @@
         input.style.cssText = `
           width: 100%;
           min-width: 50px;
-          padding: 4px;
+          padding: .2em;
           border: 1px solid #ddd;
           box-sizing: border-box;
           resize: horizontal;
           overflow: visible;
+          margin: 0;
+          font-size: 1rem;
+          
         `;
         // Ajuster automatiquement la largeur
         function adjustWidth() {
@@ -273,6 +278,7 @@
     
     const navigation = document.createElement('div');
     navigation.style.textAlign = 'center';
+    navigation.style.padding = '.2em';
     navigation.innerHTML = `
       <button id="prev-btn" class="csv-nav-button">Précédent</button>
       <span style="margin: 0 10px;" id="csv-counter"></span>
