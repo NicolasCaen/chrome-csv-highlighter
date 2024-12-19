@@ -122,90 +122,91 @@
     
     table.innerHTML = '';
     
-    // Utiliser parseCSVLine au lieu de l'ancien parseLine
     const headers = parseCSVLine(state.csvLines[0]);
     const currentLine = parseCSVLine(state.csvLines[lineIndex]);
     
+    // Calculer la largeur minimale en caractères pour chaque colonne
+    const columnWidths = new Array(headers.length).fill(0);
+    
+    // Vérifier la largeur nécessaire pour les en-têtes
+    headers.forEach((header, index) => {
+        columnWidths[index] = Math.max(columnWidths[index], header.length) + 2; // +2ch pour l'espacement
+    });
+    
+    // Vérifier la largeur nécessaire pour les données
+    currentLine.forEach((cell, index) => {
+        columnWidths[index] = Math.max(columnWidths[index], cell.length + 2); // +2ch pour l'espacement
+    });
+
     // En-tête
     const headerRow = document.createElement('tr');
-    headers.forEach(header => {
-      const th = document.createElement('th');
-      th.textContent = header.trim();
-      headerRow.appendChild(th);
+    headers.forEach((header, index) => {
+        const th = document.createElement('th');
+        th.textContent = header.trim();
+        th.style.minWidth = `${columnWidths[index]}ch`;
+        headerRow.appendChild(th);
     });
     table.appendChild(headerRow);
     
     // Ligne de données
     if (lineIndex > 0) {
-      const dataRow = document.createElement('tr');
-      currentLine.forEach((cell, cellIndex) => {
-        const td = document.createElement('td');
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = cell.trim();
-        input.style.cssText = `
-          width: 100%;
-          min-width: 50px;
-          padding: .2em;
-          border: 1px solid #ddd;
-          box-sizing: border-box;
-          resize: horizontal;
-          overflow: visible;
-          margin: 0;
-          font-size: 1rem;
-        `;
+        const dataRow = document.createElement('tr');
+        currentLine.forEach((cell, cellIndex) => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = cell.trim();
+            
+            // Fonction pour ajuster la largeur de l'input en ch
+            function adjustInputWidth(input) {
+                const contentLength = input.value.length;
+                return Math.max(contentLength + 2, 7); // Minimum 7ch (5 + 2 pour l'espacement)
+            }
 
-        // Ajuster automatiquement la largeur
-        function adjustWidth() {
-          const tempSpan = document.createElement('span');
-          tempSpan.style.cssText = `
-            position: absolute;
-            visibility: hidden;
-            white-space: pre;
-            font-family: inherit;
-            font-size: inherit;
-            padding: inherit;
-          `;
-          tempSpan.textContent = input.value;
-          document.body.appendChild(tempSpan);
-          input.style.width = (tempSpan.offsetWidth + 20) + 'px';
-          document.body.removeChild(tempSpan);
-        }
-            // Ajuster la largeur initiale
-    input.addEventListener('input', adjustWidth);
-    
-    // Ajuster après le chargement
-    setTimeout(adjustWidth, 0);
-        // Sauvegarder les modifications
-        input.addEventListener('change', (e) => {
-          const newValue = e.target.value;
-          const currentLineData = parseCSVLine(state.csvLines[lineIndex]);
-          currentLineData[cellIndex] = newValue;
-          state.csvLines[lineIndex] = currentLineData.join(state.separator);
-          
-          // Vérifier si le texte existe dans la page
-          const pageText = document.body.textContent.toLowerCase();
-          if (pageText.includes(newValue.toLowerCase())) {
-            td.style.backgroundColor = '#90EE90';
-            highlightTextInPage(newValue);
-          } else {
-            td.style.backgroundColor = '';
-            clearPreviousHighlights();
-          }
+            // Style de base pour l'input
+            input.style.cssText = `
+                width: ${adjustInputWidth(input)}ch;
+                min-width: 7ch;
+                padding: .2em;
+                border: 1px solid #ddd;
+                box-sizing: border-box;
+                margin: 0;
+                font-size: 1rem;
+            `;
+
+            // Ajuster la largeur lors de la modification
+            input.addEventListener('input', () => {
+                input.style.width = `${adjustInputWidth(input)}ch`;
+            });
+
+            // Reste du code existant pour l'input
+            input.addEventListener('change', (e) => {
+                const newValue = e.target.value;
+                const currentLineData = parseCSVLine(state.csvLines[lineIndex]);
+                currentLineData[cellIndex] = newValue;
+                state.csvLines[lineIndex] = currentLineData.join(state.separator);
+                
+                const pageText = document.body.textContent.toLowerCase();
+                if (pageText.includes(newValue.toLowerCase())) {
+                    td.style.backgroundColor = '#90EE90';
+                    highlightTextInPage(newValue);
+                } else {
+                    td.style.backgroundColor = '';
+                    clearPreviousHighlights();
+                }
+            });
+            
+            td.appendChild(input);
+            
+            const pageText = document.body.textContent.toLowerCase();
+            if (pageText.includes(cell.trim().toLowerCase())) {
+                td.style.backgroundColor = '#90EE90';
+                highlightTextInPage(cell.trim());
+            }
+            
+            dataRow.appendChild(td);
         });
-        
-        td.appendChild(input);
-        
-        // Vérifier si le texte existe dans la page
-        const pageText = document.body.textContent.toLowerCase();
-        if (pageText.includes(cell.trim().toLowerCase())) {
-          td.style.backgroundColor = '#90EE90';
-          highlightTextInPage(cell.trim());
-        }
-        
-        dataRow.appendChild(td);
-      });
-      table.appendChild(dataRow);
+        table.appendChild(dataRow);
     }
     
     // Mettre à jour le compteur
