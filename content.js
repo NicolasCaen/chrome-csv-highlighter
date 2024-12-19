@@ -2,7 +2,8 @@
   const state = {
     csvLines: [],
     currentIndex: 0,
-    isInitialized: false
+    isInitialized: false,
+    separator: null
   };
 
   // Fonction d'initialisation des styles
@@ -121,30 +122,12 @@
     
     table.innerHTML = '';
     
-    // Gérer les guillemets et les virgules dans les cellules
-    const parseLine = (line) => {
-      const cells = [];
-      let cell = '';
-      let inQuotes = false;
-      
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          cells.push(cell);
-          cell = '';
-        } else {
-          cell += char;
-        }
-      }
-      cells.push(cell);
-      return cells.map(c => c.trim().replace(/(^"|"$)/g, ''));
-    };
-
-    // En-tête avec parsing amélioré
+    // Utiliser parseCSVLine au lieu de l'ancien parseLine
+    const headers = parseCSVLine(state.csvLines[0]);
+    const currentLine = parseCSVLine(state.csvLines[lineIndex]);
+    
+    // En-tête
     const headerRow = document.createElement('tr');
-    const headers = parseLine(state.csvLines[0]);
     headers.forEach(header => {
       const th = document.createElement('th');
       th.textContent = header.trim();
@@ -152,11 +135,10 @@
     });
     table.appendChild(headerRow);
     
-    // Ligne de données avec parsing amélioré
+    // Ligne de données
     if (lineIndex > 0) {
       const dataRow = document.createElement('tr');
-      const cells = parseLine(state.csvLines[lineIndex]);
-      cells.forEach((cell, cellIndex) => {
+      currentLine.forEach((cell, cellIndex) => {
         const td = document.createElement('td');
         const input = document.createElement('input');
         input.type = 'text';
@@ -171,8 +153,8 @@
           overflow: visible;
           margin: 0;
           font-size: 1rem;
-          
         `;
+
         // Ajuster automatiquement la largeur
         function adjustWidth() {
           const tempSpan = document.createElement('span');
@@ -197,9 +179,9 @@
         // Sauvegarder les modifications
         input.addEventListener('change', (e) => {
           const newValue = e.target.value;
-          const currentLine = state.csvLines[lineIndex].split(',');
-          currentLine[cellIndex] = newValue;
-          state.csvLines[lineIndex] = currentLine.join(',');
+          const currentLineData = parseCSVLine(state.csvLines[lineIndex]);
+          currentLineData[cellIndex] = newValue;
+          state.csvLines[lineIndex] = currentLineData.join(state.separator);
           
           // Vérifier si le texte existe dans la page
           const pageText = document.body.textContent.toLowerCase();
@@ -355,18 +337,42 @@
   });
 
   function processCSV(data) {
-    console.log('Données CSV reçues:', data.substring(0, 100));
+    console.log('Données brutes reçues:', data.substring(0, 200)); // Affiche le début du fichier
     
-    // Normaliser les sauts de ligne pour la compatibilité Windows/Mac
+    // Normaliser les sauts de ligne
     const normalizedData = data.replace(/\r\n|\r|\n/g, '\n');
     
+    // Détecter le séparateur
+    state.separator = detectSeparator(normalizedData);
+    console.log('Séparateur choisi:', state.separator);
+    
+    // Parser les lignes
     state.csvLines = normalizedData
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+
+    // Analyser la structure
+    const firstLine = parseCSVLine(state.csvLines[0]);
+    const secondLine = state.csvLines[1] ? parseCSVLine(state.csvLines[1]) : [];
     
-    console.log('Nombre de lignes trouvées:', state.csvLines.length);
+    console.log('Analyse du parsing:', {
+        'Nombre de colonnes': firstLine.length,
+        'En-têtes détectés': firstLine,
+        'Exemple première ligne de données': secondLine,
+        'Nombre total de lignes': state.csvLines.length
+    });
+
+    // Vérifier la cohérence des colonnes
+    const columnCounts = state.csvLines
+        .slice(0, 5) // Vérifier les 5 premières lignes
+        .map(line => parseCSVLine(line).length);
     
+    console.log('Vérification colonnes:', {
+        'Nombre de colonnes par ligne (5 premières lignes)': columnCounts,
+        'Cohérent': new Set(columnCounts).size === 1 ? 'Oui' : 'Non'
+    });
+
     if (!document.getElementById('csv-viewer')) {
       createCSVViewer();
     }
@@ -403,5 +409,62 @@
     setTimeout(() => {
       notification.remove();
     }, 3000);
+  }
+
+  // Fonction améliorée pour détecter le séparateur
+  function detectSeparator(data) {
+    const firstLine = data.split(/\r\n|\r|\n/)[0];
+    const commaCount = (firstLine.match(/,/g) || []).length;
+    const semicolonCount = (firstLine.match(/;/g) || []).length;
+    
+    console.log('Analyse des séparateurs:', { 
+        commaCount, 
+        semicolonCount,
+        'exemple première ligne': firstLine 
+    });
+    
+    // Tester les deux séparateurs pour voir lequel donne le meilleur résultat
+    const commaColumns = firstLine.split(',').length;
+    const semicolonColumns = firstLine.split(';').length;
+    
+    console.log('Nombre de colonnes détectées:', {
+        'avec virgules': commaColumns,
+        'avec points-virgules': semicolonColumns
+    });
+    
+    return semicolonColumns > commaColumns ? ';' : ',';
+  }
+
+  // Fonction modifiée pour parser une ligne CSV
+  function parseCSVLine(line) {
+    if (!line) return [];
+    
+    const result = [];
+    let cell = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if ((char === state.separator) && !inQuotes) {
+            result.push(cell);
+            cell = '';
+        } else {
+            cell += char;
+        }
+    }
+    result.push(cell);
+    
+    const cleanedResult = result.map(c => c.trim().replace(/(^"|"$)/g, ''));
+    
+    // Log pour cette ligne spécifique
+    console.log('Parsing ligne:', {
+        'Ligne originale': line,
+        'Nombre de colonnes': cleanedResult.length,
+        'Colonnes': cleanedResult
+    });
+    
+    return cleanedResult;
   }
 })(); 
