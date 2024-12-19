@@ -1,65 +1,55 @@
-// Attendre que le DOM soit chargé
-document.addEventListener('DOMContentLoaded', async function() {
-  let csvData = null;
-  const fileInput = document.getElementById('fileInput');
-  const submitBtn = document.getElementById('submitBtn');
-  const fileNameDiv = document.getElementById('fileName');
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('csvFile');
+    const startLineInput = document.getElementById('startLine');
+    const loadButton = document.getElementById('loadButton');
 
-  // Charger les données sauvegardées
-  const stored = await chrome.storage.local.get(['csvData', 'fileName']);
-  if (stored.csvData && stored.fileName) {
-    csvData = stored.csvData;
-    fileNameDiv.textContent = `Fichier sélectionné : ${stored.fileName}`;
-    submitBtn.style.display = 'block';
-  }
-
-  if (fileInput) {
-    fileInput.addEventListener('change', async function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        fileNameDiv.textContent = `Fichier sélectionné : ${file.name}`;
-        submitBtn.style.display = 'block';
+    // Charger la dernière ligne sauvegardée
+    chrome.storage.local.get(['currentIndex', 'lastStartLine'], function(result) {
+        startLineInput.value = result.lastStartLine || 1;
         
-        const reader = new FileReader();
-        reader.onload = async function(event) {
-          csvData = event.target.result;
-          // Sauvegarder le fichier
-          await chrome.storage.local.set({
-            csvData: csvData,
-            fileName: file.name
-          });
-        };
-        reader.readAsText(file);
-      }
+        // Afficher la dernière position
+        if (result.currentIndex) {
+            const lastPositionInfo = document.createElement('div');
+            lastPositionInfo.className = 'info-text';
+            lastPositionInfo.innerHTML = `
+                <p>Dernière position : ligne ${result.currentIndex}</p>
+            `;
+            document.body.insertBefore(lastPositionInfo, loadButton);
+        }
     });
-  }
 
-  if (submitBtn) {
-    submitBtn.addEventListener('click', async function() {
-      if (!csvData) return;
-
-      try {
-        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-        
-        await chrome.scripting.executeScript({
-          target: {tabId: tab.id},
-          files: ['content.js']
-        }).catch(e => console.log('Script déjà injecté'));
-
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        await chrome.tabs.sendMessage(tab.id, {
-          type: 'CSV_LOADED',
-          data: csvData
+    // Écouter les changements dans le champ de ligne de départ
+    startLineInput.addEventListener('change', function() {
+        const startLine = parseInt(this.value) || 1;
+        // Mettre à jour currentIndex avec la nouvelle valeur
+        chrome.storage.local.set({ 
+            currentIndex: startLine,
+            lastStartLine: startLine 
         });
-
-        window.close();
-
-      } catch (error) {
-        console.error('Erreur:', error);
-        fileNameDiv.textContent = 'Erreur: Veuillez recharger la page et réessayer';
-        fileNameDiv.style.color = 'red';
-      }
     });
-  }
+
+    loadButton.addEventListener('click', function() {
+        const file = fileInput.files[0];
+        const startLine = parseInt(startLineInput.value) || 1;
+        
+        if (file) {
+            // Sauvegarder la ligne de départ et la position courante
+            chrome.storage.local.set({ 
+                lastStartLine: startLine,
+                currentIndex: startLine 
+            });
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        type: 'CSV_LOADED',
+                        data: e.target.result,
+                        startLine: startLine
+                    });
+                });
+            };
+            reader.readAsText(file);
+        }
+    });
 }); 

@@ -3,40 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <style>
-    .container {
+    body {
       width: 300px;
-      padding: 10px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
     }
-    #fileInput {
+    .input-group {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: bold;
+    }
+    input[type="file"] {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    input[type="number"] {
+      width: 80px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
       margin-bottom: 10px;
     }
-    #submitBtn {
-      display: none;
+    button {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      margin-top: 10px;
+      font-size: 14px;
+      font-weight: bold;
     }
-    #submitBtn:hover {
+    button:hover {
       background-color: #45a049;
     }
-    #fileName {
+    .info-text {
       margin: 10px 0;
-      font-style: italic;
+      padding: 8px;
+      background-color: #f8f8f8;
+      border-radius: 4px;
       color: #666;
+      font-size: 13px;
+    }
+    .info-text p {
+      margin: 0;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <input type="file" id="fileInput" accept=".csv">
-    <div id="fileName"></div>
-    <button id="submitBtn">Utiliser ce fichier  :) </button>
+  <div class="input-group">
+    <label for="csvFile">Sélectionner un fichier CSV :</label>
+    <input type="file" id="csvFile" accept=".csv">
   </div>
+  <div class="input-group">
+    <label for="startLine">Commencer à la ligne :</label>
+    <input type="number" id="startLine" min="1">
+    <div class="info-text">
+      <p>Cette valeur sera sauvegardée pour la prochaine utilisation</p>
+    </div>
+  </div>
+  <button id="loadButton">Charger</button>
+
   <script src="popup.js"></script>
 </body>
 </html> 
